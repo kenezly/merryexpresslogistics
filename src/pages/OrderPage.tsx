@@ -3,76 +3,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Package, CheckCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Package } from "lucide-react";
 
 const OrderPage = () => {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
 
     const form = e.target as HTMLFormElement;
     const data = new FormData(form);
+    const name = encodeURIComponent(data.get("fullName") as string);
+    const phone = encodeURIComponent(data.get("phone") as string);
+    const pickup = encodeURIComponent(data.get("pickup") as string);
+    const delivery = encodeURIComponent(data.get("delivery") as string);
+    const details = encodeURIComponent(data.get("details") as string);
 
-    const orderData = {
-      full_name: (data.get("fullName") as string).trim(),
-      phone: (data.get("phone") as string).trim(),
-      pickup_location: (data.get("pickup") as string).trim(),
-      delivery_location: (data.get("delivery") as string).trim(),
-      package_details: (data.get("details") as string).trim(),
-    };
+    const message = `Hello, I'd like to place a delivery order.%0A%0A*Full Name:* ${name}%0A*Phone:* ${phone}%0A*Pickup:* ${pickup}%0A*Delivery:* ${delivery}%0A*Package Details:* ${details}`;
 
-    try {
-      const { error } = await supabase.from("delivery_orders").insert(orderData);
+    window.open(`https://wa.me/2349063071178?text=${message}`, "_blank");
 
-      if (error) throw error;
-
-      // Send notification to business owner
-      await supabase.functions.invoke("notify-new-order", {
-        body: orderData,
-      });
-
-      setSubmitted(true);
-      form.reset();
-    } catch (err) {
-      console.error("Order submission error:", err);
-      toast({
-        title: "Something went wrong",
-        description: "Please try again or contact us directly.",
-        variant: "destructive",
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    setSubmitting(false);
+    toast({ title: "Order Submitted!", description: "You'll be redirected to WhatsApp to confirm." });
+    form.reset();
   };
-
-  if (submitted) {
-    return (
-      <div>
-        <section className="bg-primary py-20">
-          <div className="container">
-            <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-4">Order Received!</h1>
-          </div>
-        </section>
-        <section className="container py-20 max-w-2xl text-center">
-          <div className="rounded-xl border border-border bg-card p-8">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Thank You!</h2>
-            <p className="text-muted-foreground mb-6">
-              Your delivery order has been received. We'll review it and get back to you shortly.
-            </p>
-            <Button onClick={() => setSubmitted(false)} size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
-              Place Another Order
-            </Button>
-          </div>
-        </section>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -118,7 +74,7 @@ const OrderPage = () => {
             </div>
 
             <Button type="submit" disabled={submitting} size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
-              {submitting ? "Submitting..." : "Submit Order"}
+              {submitting ? "Submitting..." : "Submit Order via WhatsApp"}
             </Button>
           </form>
         </div>
