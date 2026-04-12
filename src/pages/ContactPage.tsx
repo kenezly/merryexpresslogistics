@@ -35,7 +35,7 @@ const ContactPage = () => {
             <div className="flex flex-col gap-5">
               {[
                 { icon: Phone, label: "Phone", value: "+234 906 307 1178", href: "tel:+2349063071178" },
-                { icon: Mail, label: "Email", value: "info@merryexpress.ng", href: "mailto:info@merryexpress.ng" },
+                { icon: Mail, label: "Email", value: "themerryexpress@gmail.com", href: "mailto:themerryexpress@gmail.com" },
                 { icon: MapPin, label: "Address", value: "Ibadan, Nigeria" },
                 { icon: Clock, label: "Hours", value: "Mon – Sat: 7am – 8pm" },
               ].map((item) => (
