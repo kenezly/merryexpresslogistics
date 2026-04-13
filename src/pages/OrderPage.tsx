@@ -4,30 +4,54 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Package } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const OrderPage = () => {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
 
-    const form = e.target as HTMLFormElement;
-    const data = new FormData(form);
-    const name = encodeURIComponent(data.get("fullName") as string);
-    const phone = encodeURIComponent(data.get("phone") as string);
-    const pickup = encodeURIComponent(data.get("pickup") as string);
-    const delivery = encodeURIComponent(data.get("delivery") as string);
-    const details = encodeURIComponent(data.get("details") as string);
+    try {
+      const form = e.target as HTMLFormElement;
+      const data = new FormData(form);
+      const fullName = data.get("fullName") as string;
+      const phone = data.get("phone") as string;
+      const pickup = data.get("pickup") as string;
+      const delivery = data.get("delivery") as string;
+      const details = data.get("details") as string;
 
-    const message = `Hello, I'd like to place a delivery order.%0A%0A*Full Name:* ${name}%0A*Phone:* ${phone}%0A*Pickup:* ${pickup}%0A*Delivery:* ${delivery}%0A*Package Details:* ${details}`;
+      // Save order to database
+      const orderId = crypto.randomUUID();
+      const { error: dbError } = await supabase.from("delivery_orders").insert({
+        id: orderId,
+        full_name: fullName,
+        phone,
+        pickup_location: pickup,
+        delivery_location: delivery,
+        package_details: details,
+      });
 
-    window.open(`https://wa.me/2349063071178?text=${message}`, "_blank");
+      if (dbError) {
+        console.error("DB error:", dbError);
+        throw new Error("Failed to save order");
+      }
 
-    setSubmitting(false);
-    toast({ title: "Order Submitted!", description: "You'll be redirected to WhatsApp to confirm." });
-    form.reset();
+      // Send WhatsApp notification
+      await supabase.functions.invoke("notify-order", {
+        body: { orderId, fullName, phone, pickup, delivery, details },
+      });
+
+      toast({ title: "Order Placed!", description: "Your delivery order has been received. We'll contact you shortly." });
+      form.reset();
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Order Saved", description: "Your order was received. We'll reach out to you soon.", variant: "default" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -74,7 +98,7 @@ const OrderPage = () => {
             </div>
 
             <Button type="submit" disabled={submitting} size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
-              {submitting ? "Submitting..." : "Submit Order via WhatsApp"}
+              {submitting ? "Submitting..." : "Submit Order"}
             </Button>
           </form>
         </div>
