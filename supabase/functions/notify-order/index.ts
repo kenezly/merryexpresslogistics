@@ -31,6 +31,18 @@ Deno.serve(async (req) => {
     const TWILIO_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM");
     if (!TWILIO_FROM) throw new Error("TWILIO_WHATSAPP_FROM is not configured");
 
+    // Validate E.164 format: + followed by 7-15 digits
+    if (!/^\+\d{7,15}$/.test(TWILIO_FROM)) {
+      console.error("Invalid TWILIO_WHATSAPP_FROM:", TWILIO_FROM);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "WhatsApp sender number is not a valid phone number. Please set TWILIO_WHATSAPP_FROM to an E.164 number like +14155238886.",
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const message = [
       `📦 *New Delivery Order*`,
       ``,
