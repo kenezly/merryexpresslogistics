@@ -1,31 +1,7 @@
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from './types';
 
-type InsertResult = { error: null | { message: string } };
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-function buildFromHelper(table: string) {
-  return {
-    insert: async (data: Record<string, unknown>): Promise<InsertResult> => {
-      try {
-        const res = await fetch(`${BASE}/api/orders`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({ message: "Request failed" }));
-          return { error: { message: err.message ?? "Request failed" } };
-        }
-        return { error: null };
-      } catch (e: unknown) {
-        return { error: { message: e instanceof Error ? e.message : "Network error" } };
-      }
-    },
-  };
-}
-
-export const supabase = {
-  from: (table: string) => buildFromHelper(table),
-  functions: {
-    invoke: async (_name: string, _opts?: unknown) => ({ data: null, error: null }),
-  },
-};
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
