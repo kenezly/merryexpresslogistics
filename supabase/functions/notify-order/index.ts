@@ -55,6 +55,9 @@ Deno.serve(async (req) => {
       `Order ID: ${orderId}`,
     ].join("\n");
 
+    console.log("DEBUG From:", `whatsapp:${TWILIO_FROM}`);
+    console.log("DEBUG To:", OWNER_WHATSAPP);
+
     const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
       method: "POST",
       headers: {
